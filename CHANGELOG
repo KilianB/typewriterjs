@@ -1,4 +1,4 @@
-# 5.12.2021
+# 5.12.2021 2.20.0
 
 - make node argument for pasteString optional
 - add the ability to change cursor position in the text
@@ -9,7 +9,7 @@
 - elements will now be deleted on a character by character basis and not based on child elements
     - removeAll will now delete elements equally fast. To clear elements take a look at the `clear` method
 
-# 2.12.2021
+# 2.12.2021 2.19.0
 
 - add clear functionality to remove text instantly without animation
 - allow a deleteDelay of 0 for deleteCharacter
