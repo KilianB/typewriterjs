@@ -1,5 +1,6 @@
 # 5.12.2021 2.20.0
 
+- add a more natural delay for typing (e.g. duplicated letters have a shorter delay. a space has a longer delay range)
 - make node argument for pasteString optional
 - add the ability to change cursor position in the text
 - text can be inserted pasted and removed from the cursor position
@@ -9,7 +10,14 @@
 - elements will now be deleted on a character by character basis and not based on child elements
     - removeAll will now delete elements equally fast. To clear elements take a look at the `clear` method
 
+- add pauseFor to Types
+- Avoid Google cloud translation to change text while typewrite
+
 # 2.12.2021 2.19.0
 
 - add clear functionality to remove text instantly without animation
 - allow a deleteDelay of 0 for deleteCharacter
+- check the type of speed in deleteAll instead of if it is truthy. This will allow the user to specify a potential delay of 0
+- Bump dependencies
+
+-typo fixes
