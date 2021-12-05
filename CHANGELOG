@@ -1,3 +1,8 @@
+# 5.12.2021 2.20.1
+
+- removed debug logging statements
+- fixed clear operation not deleting the last item in the shadow dom if it was an html element
+
 # 5.12.2021 2.20.0
 
 - add a more natural delay for typing (e.g. duplicated letters have a shorter delay. a space has a longer delay range)

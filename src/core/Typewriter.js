@@ -929,8 +929,6 @@ class Typewriter {
 
         //How many elements do we want to delete?
         const { amount, callOnRemove } = eventArgs;
-        
-        console.log([...visibleNodes]);
 
         if (copiedNodes.length > 0) {
 
@@ -945,11 +943,12 @@ class Typewriter {
 
           const numOfNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
 
-          console.log("Cursor Offset "+ cursorOffset + " Amount: " + amount + " Max possible to remove: " + headTextNodes.length + " Actual to remove: " + numOfNodesToDelete);
-
-
-          const removeParentNodeIfNecessary = (parent) => {            
+          const removeParentNodeIfNecessary = (parent) => {          
             if(parent != this.state.elements.wrapper && parent.childNodes.length == 0){
+              //pop the parent fromt he stack
+              if(copiedNodes.pop().node !== parent){
+                console.error("Objects should be identical");
+              }
               const nextParent = parent.parentNode;
               nextParent.removeChild(parent);
               removeParentNodeIfNecessary(nextParent);
@@ -970,7 +969,6 @@ class Typewriter {
               const parent = node.parentNode;
 
               if(parent){
-                //May be undefined if removeParentNodeIfNecessary already caught it
                 try{
                   parent.removeChild(node);
                   }catch(err){
@@ -985,7 +983,6 @@ class Typewriter {
             }
           }
           this.state.visibleNodes = [...copiedNodes,...tailNodes]
-          console.log(this.state.visibleNodes);
         }
         break;
       }
