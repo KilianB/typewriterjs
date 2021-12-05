@@ -1,0 +1,15 @@
+# 5.12.2021
+
+- make node argument for pasteString optional
+- add the ability to change cursor position in the text
+- text can be inserted pasted and removed from the cursor position
+    - (this changes dom layout and css so it might be a breaking change)
+    - additionally some linear search is introduced which might slow down performance due to legacy reason 
+- pasteString now adds the characters one by one allowing for individual deletion
+- elements will now be deleted on a character by character basis and not based on child elements
+    - removeAll will now delete elements equally fast. To clear elements take a look at the `clear` method
+
+# 2.12.2021
+
+- add clear functionality to remove text instantly without animation
+- allow a deleteDelay of 0 for deleteCharacter

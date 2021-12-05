@@ -28,6 +28,7 @@ class Typewriter {
       wrapper: document.createElement('span'),
       cursor: document.createElement('span'),
     },
+    lastCharacterTyped: null,
   }
 
   options = {
@@ -77,8 +78,9 @@ class Typewriter {
 
   init() {
     this.setupWrapperElement();
+    
     this.addEventToQueue(EVENT_NAMES.CHANGE_CURSOR, { cursor: this.options.cursor }, true);
-    this.addEventToQueue(EVENT_NAMES.REMOVE_ALL, null, true);
+    //this.addEventToQueue(EVENT_NAMES.REMOVE_ALL, null, true);
 
     if(window && !window.___TYPEWRITER_JS_STYLES_ADDED___ && !this.options.skipAddStyles) {
       addStyles(STYLES);
@@ -108,7 +110,9 @@ class Typewriter {
     this.state.elements.container.innerHTML = '';
 
     this.state.elements.container.appendChild(this.state.elements.wrapper);
-    this.state.elements.container.appendChild(this.state.elements.cursor);
+    this.state.elements.wrapper.appendChild(this.state.elements.cursor);
+
+    this.state.visibleNodes.push(this.state.elements.cursor);
   }
 
   /**
@@ -217,14 +221,9 @@ class Typewriter {
    * @author Luiz Felicio <unifelicio@gmail.com>
    */
   pasteString = (string, node = null) => {
-    if(doesStringContainHTMLTag(string)) {
-      return this.typeOutHTMLString(string, node, true);
-    }
-
     if(string) {
       this.addEventToQueue(EVENT_NAMES.PASTE_STRING, { character: string, node });
     }
-
     return this;
   }
 
@@ -237,7 +236,7 @@ class Typewriter {
    *
    * @author Tameem Safi <tamem@safi.me.uk>
    */
-  typeOutHTMLString = (string, parentNode = null, pasteEffect) => {
+  typeOutHTMLString = (string, parentNode = null) => {
     const childNodes = getDOMElementFromString(string);
 
     if(childNodes.length > 0 ) {
@@ -254,18 +253,72 @@ class Typewriter {
             node,
             parentNode,
           });
-
-            pasteEffect ? this.pasteString(nodeHTML, node) :  this.typeString(nodeHTML, node);
+          this.typeString(nodeHTML, node);
         } else {
           if(node.textContent) {
-            pasteEffect ? this.pasteString(node.textContent, parentNode) :  this.typeString(node.textContent, parentNode);
+            this.typeString(node.textContent, parentNode);
           }
         }
       }
     }
-
     return this;
   }
+  
+    /**
+   * Type out a string which is wrapper around HTML tag
+   *
+   * @param {String} string String to type
+   * @param {HTMLElement} parentNode Node to add inner nodes to
+   * @return {Typewriter}
+   *
+   * @author Tameem Safi <tamem@safi.me.uk>
+   */
+     htmlPasteToNodes = (string, parentNode = null) => {
+
+      const childNodes = getDOMElementFromString(string);
+      const nodesToAdd = []
+
+      if(childNodes.length > 0 ) {
+        for(let i = 0; i < childNodes.length; i++) {
+          const node = childNodes[i];
+          const nodeHTML = node.innerHTML;
+  
+          if(node && node.nodeType !== 3) {
+            // Reset innerText of HTML element
+            node.innerHTML = '';
+  
+            // Add event queue item to insert HTML tag before typing characters
+    
+            nodesToAdd.push({
+              type: VISIBLE_NODE_TYPES.HTML_TAG,
+              node: node,
+              parentNode: parentNode,
+            })
+
+            nodesToAdd.push(...this.htmlPasteToNodes(nodeHTML,node))
+
+          }
+           else {
+            if(node.textContent) {
+              //pasteEffect ? this.pasteString(node.textContent, parentNode) :  this.typeString(node.textContent, parentNode);
+            
+              //Simply text content
+
+           
+              nodesToAdd.push(...node.textContent.split("").map(val =>{
+                return {
+                  type: VISIBLE_NODE_TYPES.TEXT_NODE,
+                  node: val,
+                  parentNode: parentNode
+                }
+              }));
+            }
+          }
+        }
+      }
+      return nodesToAdd;
+    }
+  
 
   /**
    * Delete the last X characters.
@@ -406,6 +459,11 @@ class Typewriter {
       this.addEventToQueue(EVENT_NAMES.TYPE_CHARACTER, { character, node });
     });
 
+    return this;
+  }
+
+  changeCursorPosition = (position,delay = 0) => {
+    this.addEventToQueue(EVENT_NAMES.CHANGE_CURSOR_POSITION,{position,delay})
     return this;
   }
 
@@ -565,8 +623,82 @@ class Typewriter {
       currentEvent.eventName === EVENT_NAMES.REMOVE_CHARACTER
     ) {
       delay = this.options.deleteSpeed === 'natural' ? getRandomInteger(40, 80) : this.options.deleteSpeed;
-    } else {
-      delay = this.options.delay === 'natural' ? getRandomInteger(120, 160) : this.options.delay;
+    }else if(currentEvent.eventName === EVENT_NAMES.TYPE_CHARACTER){
+
+
+      // const leftPinkySpeed = 120;
+      // const leftRingSpeed = 230;
+      // const leftMiddleSpeed = 160;
+      // const leftIndexSpeed = 200;
+      // const rightIndexSpeed = 135;
+      // const rightMiddleSpeed = 130;
+      // const rightRingSpeed = 190;
+      // const thumb = 100;
+
+
+      // //Only valid for german local, special characters might be shifted
+      // const obs = [];
+      // obs.push({
+      //   lookupSet: new Set(["1","q","a","z","^","@"]),
+      //   speed: leftPinkySpeed
+      // },{
+      //   lookupSet: new Set(["2","w","s","x"]),
+      //   speed: leftRingSpeed
+      // },{
+      //   lookupSet: new Set(["3","e","d","c","r"]),
+      //   speed: leftMiddleSpeed
+      // },{
+      //   lookupSet: new Set(["4","5","t","f","g","v","b",]),
+      //   speed: leftIndexSpeed
+      // },{
+      //   lookupSet: new Set([" "]),
+      //   speed: thumb
+      // },{
+      //   lookupSet: new Set(["6","7","u","j","h","n","m","z"]),
+      //   speed: rightIndexSpeed
+      // },{
+      //   lookupSet: new Set(["8","i","k",","]),
+      //   speed: thumb
+      // },{
+      //   lookupSet: new Set([" "]),
+      //   speed: thumb
+      // },{
+      //   lookupSet: new Set([" "]),
+      //   speed: thumb
+      // },{
+      //   lookupSet: new Set([" "]),
+      //   speed: thumb
+      // },
+      // {
+      //   lookupSet: new Set(["@","€"]),
+      //   speed: leftPinkySpeed
+      // }
+      // )
+
+      // const resolveTypeSpeed= (character) =>{
+
+      //   if(true){
+
+      //   }
+      //   else{
+      //     //Special characters usually require an additional press with shift. This takes a bit longer
+      //   }
+        
+
+      // }
+
+      if(this.options.delay === 'natural'){
+        //White spaces usually have a slightly higher delay
+        if(currentEvent.eventArgs.character === " "){
+          delay = getRandomInteger(180, 190)
+        }else if(this.state.lastCharacterTyped == currentEvent.eventArgs.character){
+          delay = getRandomInteger(90, 100)
+        }else{
+          delay = getRandomInteger(120, 170)
+        }
+      }else{
+        delay = this.options.delay
+      }
     }
 
     if(delta <= delay) {
@@ -581,8 +713,52 @@ class Typewriter {
     // Run item from event loop
     switch(eventName) {
       case EVENT_NAMES.PASTE_STRING:
+
+      const { character, node } = eventArgs;
+
+      const nodesToAdd = this.htmlPasteToNodes(character);
+
+      const nodesAdded = [];
+
+      //Get the last known element before the cursor.
+      nodesToAdd.forEach(node =>{
+
+        let nodeToAdd = node.type === VISIBLE_NODE_TYPES.TEXT_NODE ? document.createTextNode(node.node) : node.node;
+         
+          //If a parent is specified means that is belongs to an html tag
+          if(node.parentNode){
+            node.parentNode.appendChild(nodeToAdd);
+          }else{
+            //Add it to the html wrapper element instead... //But at the correct position
+            this.state.elements.wrapper.insertBefore(nodeToAdd,this.state.elements.cursor);
+          }
+          nodesAdded.push({
+            type: node.type,
+            node: nodeToAdd,
+            parentNode: node.parentNode ? node.parentNode : this.state.elements.wrapper
+          })
+      });
+
+      const splitIndex = this.state.visibleNodes.indexOf(this.state.elements.cursor);
+
+      //This should always be the case since the cursor would be the last element anyways
+      const numOfElements = this.state.visibleNodes.length;
+      if(splitIndex > 0){
+        this.state.visibleNodes = [
+          ...this.state.visibleNodes.slice(0,splitIndex),
+          ...nodesAdded,
+          ...this.state.visibleNodes.slice(splitIndex,numOfElements)
+        ]
+      }else if(splitIndex == 0){
+        this.state.visibleNodes = [
+          ...nodesAdded,
+          ...this.state.visibleNodes
+        ]
+      }
+      break;
+
       case EVENT_NAMES.TYPE_CHARACTER: {
-        const { character, node } = eventArgs;
+        const { character, node } = eventArgs
         const textNode = document.createTextNode(character);
 
         let textNodeToUse = textNode
@@ -595,26 +771,28 @@ class Typewriter {
           if(node) {
             node.appendChild(textNodeToUse);
           } else {
-            this.state.elements.wrapper.appendChild(textNodeToUse);
+            this.state.elements.wrapper.insertBefore(textNodeToUse,this.state.elements.cursor);
           }
         }
 
-        this.state.visibleNodes = [
-          ...this.state.visibleNodes,
-          {
-            type: VISIBLE_NODE_TYPES.TEXT_NODE,
-            character,
-            node: textNodeToUse,
-          },
-        ];
+        //O(n).... we should count it ourselves instead.
+        let splitIndex = this.state.visibleNodes.indexOf(this.state.elements.cursor);
 
+        this.state.visibleNodes.splice(splitIndex,0,{
+          type: VISIBLE_NODE_TYPES.TEXT_NODE,
+          character,
+          node: textNodeToUse,
+          parentNode: node || this.state.elements.wrapper
+        });
+
+        this.state.lastCharacterTyped = character;
         break;
       }
 
       case EVENT_NAMES.REMOVE_CHARACTER: {
         eventQueue.unshift({
           eventName: EVENT_NAMES.REMOVE_LAST_VISIBLE_NODE,
-          eventArgs: { removingCharacterNode: true },
+          eventArgs: {},
         });
         break;
       }
@@ -636,22 +814,34 @@ class Typewriter {
       }
 
       case EVENT_NAMES.ADD_HTML_TAG_ELEMENT: {
+
         const { node, parentNode } = currentEvent.eventArgs;
 
         if(!parentNode) {
-          this.state.elements.wrapper.appendChild(node);
+          this.state.elements.wrapper.insertBefore(node,this.state.elements.cursor);
         } else {
           parentNode.appendChild(node);
         }
 
-        this.state.visibleNodes = [
-          ...this.state.visibleNodes,
-          {
-            type: VISIBLE_NODE_TYPES.HTML_TAG,
-            node,
-            parentNode: parentNode || this.state.elements.wrapper,
-          },
-        ];
+        const cursorPos = this.state.visibleNodes.indexOf(this.state.elements.cursor);
+
+        this.state.visibleNodes.splice(cursorPos,0,{
+          type: VISIBLE_NODE_TYPES.HTML_TAG,
+          node,
+          parentNode: parentNode || this.state.elements.wrapper,
+        })
+
+        //We need to add it here correctly as well
+        // this.state.visibleNodes = [
+        //   ...this.state.visibleNodes,
+        //   {
+        //     type: VISIBLE_NODE_TYPES.HTML_TAG,
+        //     node,
+        //     parentNode: parentNode || this.state.elements.wrapper,
+        //   },
+        // ];
+
+
         break;
       }
 
@@ -672,10 +862,14 @@ class Typewriter {
           });
         }
 
-        for(let i = 0, length = visibleNodes.length; i < length; i++) {
+        
+        //TODO events will be dropped since we are adding too many events (additional html elements);
+        const cursorOffset = this.state.visibleNodes.indexOf(this.state.elements.cursor);
+
+        for(let i = 0; i < cursorOffset; i++) {
           removeAllEventItems.push({
             eventName: EVENT_NAMES.REMOVE_LAST_VISIBLE_NODE,
-            eventArgs: { removingCharacterNode: false },
+            eventArgs: {},
           });
         }
 
@@ -686,17 +880,23 @@ class Typewriter {
             eventArgs: { speed: this.options.deleteSpeed, temp: true },
           });
         }
-
         eventQueue.unshift(...removeAllEventItems);
-
         break;
       }
 
       case EVENT_NAMES.REMOVE_LAST_VISIBLE_NODE: {
-        const { removingCharacterNode } = currentEvent.eventArgs;
-
+      
         if(this.state.visibleNodes.length) {
-          const { type, node, character } = this.state.visibleNodes.pop();
+
+          //Actually do not remove the last added node but the node just before the cursor
+          const curIndex = this.state.visibleNodes.indexOf(this.state.elements.cursor) - 1;
+
+          //Cursor at beginning of the row. There is nothing to delete
+          if(curIndex < 0){
+            break;
+          }
+
+          const { type, node, character, parentNode } = this.state.visibleNodes.splice(curIndex,1)[0];//this.state.visibleNodes.pop();
 
           if(this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function') {
             this.options.onRemoveNode({
@@ -709,8 +909,8 @@ class Typewriter {
             node.parentNode.removeChild(node);
           }
 
-          // Remove extra node as current deleted one is just an empty wrapper node
-          if(type === VISIBLE_NODE_TYPES.HTML_TAG && removingCharacterNode) {
+          //This is a text node which belongs to an HTML node
+          if(parentNode && parentNode != this.state.elements.wrapper && parentNode.childNodes.length == 0 ){
             eventQueue.unshift({
               eventName: EVENT_NAMES.REMOVE_LAST_VISIBLE_NODE,
               eventArgs: {},
@@ -721,35 +921,105 @@ class Typewriter {
       }
 
       case EVENT_NAMES.CLEAR: {
+
         //Clear all nodes without delay.
         //Instead of creating a new event for each operation we perform it immediately as the event loop has it's own delay.
-
         const { visibleNodes } = this.state;
         const copiedNodes = [...visibleNodes];
 
         //How many elements do we want to delete?
         const { amount, callOnRemove } = eventArgs;
+        
+        console.log([...visibleNodes]);
+
         if (copiedNodes.length > 0) {
 
-          const numOfNodesToDelete = amount && amount > 0 && amount < copiedNodes.length ? amount : copiedNodes.length;
+          //Check cursor offset first. (these are the max number of elements we could possibly delete)
+          const cursorOffset = this.state.visibleNodes.indexOf(this.state.elements.cursor);
 
+          //Those will always be kept because they are behind the cursor
+          const tailNodes = copiedNodes.splice(cursorOffset,copiedNodes.length - cursorOffset);
+          
+          //Removal is counted against actual text nodes and not html tags, thus we need to count the actual number
+          const headTextNodes = copiedNodes.filter(node => node.type === VISIBLE_NODE_TYPES.TEXT_NODE);
+
+          const numOfNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
+
+          console.log("Cursor Offset "+ cursorOffset + " Amount: " + amount + " Max possible to remove: " + headTextNodes.length + " Actual to remove: " + numOfNodesToDelete);
+
+
+          const removeParentNodeIfNecessary = (parent) => {            
+            if(parent != this.state.elements.wrapper && parent.childNodes.length == 0){
+              const nextParent = parent.parentNode;
+              nextParent.removeChild(parent);
+              removeParentNodeIfNecessary(nextParent);
+            }
+          }
+          
+          //Iterate backwards as html nodes are added first
           for (let i = 0; i < numOfNodesToDelete;) {
+
             if(copiedNodes.length > 0){
               const { type, node, character } = copiedNodes.pop();
 
-              if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
-                this.options.onRemoveNode(node, character);
-              }
+              // if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
+              //   this.options.onRemoveNode(node, character);
+              // }
 
-              node.parentNode.removeChild(node);
-              if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
-                i++;
+              //Make a copy or else we loose the reference after removing
+              const parent = node.parentNode;
+
+              if(parent){
+                //May be undefined if removeParentNodeIfNecessary already caught it
+                try{
+                  parent.removeChild(node);
+                  }catch(err){
+                    console.error(err);
+                  }
+                  //Do not count html nodes
+                  if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
+                    i++;
+                    removeParentNodeIfNecessary(parent);
+                  }
               }
-            }else{
-              break;
             }
           }
-          this.state.visibleNodes = copiedNodes;
+          this.state.visibleNodes = [...copiedNodes,...tailNodes]
+          console.log(this.state.visibleNodes);
+        }
+        break;
+      }
+
+      case EVENT_NAMES.CHANGE_CURSOR_POSITION:{
+        
+        const {position} = eventArgs;
+
+        if(typeof position === "number"){
+
+          let insertPos = 0;
+          
+          //Jump behind and skip html tags
+          for(let i = 0; i < this.state.visibleNodes.length; i++){
+            if(insertPos == position){
+              insertPos = i;
+              break;
+            }
+            if(this.state.visibleNodes[i].type == VISIBLE_NODE_TYPES.TEXT_NODE){
+              insertPos++;
+            }
+          }
+          
+          this.state.visibleNodes[insertPos].node.before(this.state.elements.cursor);
+
+          //Rearange the cursor in the visible nodes array
+
+          //Remove the cursor from it's current position
+
+          const actualCursorPosition = this.state.visibleNodes.indexOf(this.state.elements.cursor);
+          this.state.visibleNodes.splice(actualCursorPosition,1);
+
+          //Insert it at the correct destination
+          this.state.visibleNodes.splice(insertPos,0,this.state.elements.cursor);
         }
         break;
       }

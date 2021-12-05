@@ -133,7 +133,7 @@ declare module "typewriter-effect" {
      *
      * @param string  String to paste out, it can contain HTML tags
      */
-    pasteString(string: string, node: HTMLElement | null): TypewriterClass
+    pasteString(string: string, node?: HTMLElement | null): TypewriterClass
 
     /**
      * Delete everything that is visible inside of the typewriter wrapper

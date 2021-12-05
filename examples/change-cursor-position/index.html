@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Example - Change cursor position</title>
+</head>
+<body>
+
+  <div id="typewriter"></div>
+
+  <script src='../../dist/core.js'></script>
+  <script type='text/javascript'>
+    const typewriter = new Typewriter('#typewriter', {
+      loop: false
+    });
+
+    typewriter
+      .typeString("He<b>l</b>lo")
+      .changeCursorPosition(3)
+      .pauseFor(400)
+      .pasteString("123<b>ab<i>c</i></b>456")
+      .clear(4)
+      .start()
+  </script>
+  
+</body>
+</html>

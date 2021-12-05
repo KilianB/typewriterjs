@@ -12,6 +12,7 @@ export const EVENT_NAMES = {
   CHANGE_CURSOR: 'CHANGE_CURSOR',
   PASTE_STRING: 'PASTE_STRING',
   CLEAR: 'CLEAR',
+  CHANGE_CURSOR_POSITION: 'CHANGE_CURSOR_POSITION'
 };
 
 export const VISIBLE_NODE_TYPES = {
@@ -19,4 +20,4 @@ export const VISIBLE_NODE_TYPES = {
   TEXT_NODE: 'TEXT_NODE',
 }
 
-export const STYLES = `.Typewriter__cursor{-webkit-animation:Typewriter-cursor 1s infinite;animation:Typewriter-cursor 1s infinite;margin-left:1px}@-webkit-keyframes Typewriter-cursor{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes Typewriter-cursor{0%{opacity:0}50%{opacity:1}100%{opacity:0}}`;
+export const STYLES = `.Typewriter__cursor{-webkit-animation:Typewriter-cursor 1s infinite;animation:Typewriter-cursor 1s infinite;margin-left:1px;width: 0px;margin: 0px;display: inline-block;}@-webkit-keyframes Typewriter-cursor{0%{opacity:0}50%{opacity:1}100%{opacity:0}}@keyframes Typewriter-cursor{0%{opacity:0}50%{opacity:1}100%{opacity:0}}`;
