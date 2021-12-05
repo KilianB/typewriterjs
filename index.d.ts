@@ -193,6 +193,25 @@ declare module "typewriter-effect" {
      * @param delay delay Number or 'natural'
      */
     changeDelay(delay?: Speed): TypewriterClass
+
+
+    /**
+     * Change the appearance of the cursor
+     *
+     * @param cursor the character that will be displayed int he cursor location
+     */
+    changeCursor(cursor: string): TypewriterClass
+
+
+    /**
+     * Move the cursor to the specified position. The cursor specified the location insert and deletion operations will be carried out from 
+     * and where the cursor will be visually displayed.
+     *
+     * @param position the character index the cursor will be moved to. The index is based on the visible number of characters typed.
+     * @param delay the number of milliseconds to pause before conduction this operation
+     */
+    changeCursorPosition(position: number, delay?: number): TypewriterClass
+
   }
 
   const TypewriterComponent: React.FunctionComponent<{
