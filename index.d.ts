@@ -151,7 +151,7 @@ declare module "typewriter-effect" {
     deleteAll(speed?: Speed): TypewriterClass
 
     /**
-     * Delete and amount of characters, starting at the end of the visible
+     * Delete an amount of characters, starting at the cursor location
      * string.
      *
      * @param amount Number of characters
@@ -159,7 +159,7 @@ declare module "typewriter-effect" {
     deleteChars(amount: number): TypewriterClass
 
     /**
-     * Delete and amount of characters, starting at the end of the visible.
+     * Delete an amount of characters, starting at the cursor position.
      * Opposed to calling the deleteAll or deleteChars option this function clears the number of 
      * characters in a single operation without noticeable delay. 
      * 
@@ -167,6 +167,16 @@ declare module "typewriter-effect" {
      * @param boolean whether to call the onRemoveNode callback be called for each node. False by default
      */
     clear(amount?: number, callOnRemove? : boolean): TypewriterClass
+
+      /**
+     * Delete and amount of characters at the end of the string independently of the cursor position.
+     * Opposed to calling the deleteAll or deleteChars option this function clears the number of 
+     * characters in a single operation without noticeable delay. 
+     * 
+     * @param amount Number of characters to delete. A value of 0 or negative removes everything
+     * @param boolean whether to call the onRemoveNode callback be called for each node. False by default
+     */
+       clearEnd(amount?: number, callOnRemove? : boolean): TypewriterClass
 
     /**
      * Call a callback function. The first parameter to the callback elements

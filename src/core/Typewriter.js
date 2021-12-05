@@ -321,7 +321,7 @@ class Typewriter {
   
 
   /**
-   * Delete the last X characters.
+   * Delete the last X characters at the cursor position
    * Opposed to using the deleteAll event still having a small delay depending on the event loop ticker,
    * using clear removes the items immediately.
    *
@@ -335,6 +335,22 @@ class Typewriter {
     this.addEventToQueue(EVENT_NAMES.CLEAR, { amount, callOnRemove });
     return this;
   };
+
+   /**
+   * Delete the last X characters at the end of the document independently of the current cursor position.
+   * Opposed to using the deleteAll event still having a small delay depending on the event loop ticker,
+   * using clear removes the items immediately.
+   *
+   * @param {Number} amount the number of characters to delete. A value of 0 or smaller will remove all written characters
+   * @param {Boolean} callOnRemove whether to call the onRemove callback for each node or not. Defaults to false
+   * @return {Typewriter}
+   *
+   * @author Kilian Brachtendorf <kilian@brachtendorf.dev>
+   */
+    clearEnd = (amount = 0, callOnRemove = false) => {
+      this.addEventToQueue(EVENT_NAMES.CLEAR_END, { amount, callOnRemove });
+      return this;
+    };
 
   /**
    * Add delete all characters to event queue
@@ -920,6 +936,61 @@ class Typewriter {
         break;
       }
 
+      case EVENT_NAMES.CLEAR_END: {
+        //How many elements do we want to delete?
+        const { amount, callOnRemove } = eventArgs;
+        
+        const { visibleNodes } = this.state;
+        const copiedNodes = [...visibleNodes];
+
+
+        if (copiedNodes.length > 0) {
+
+
+          const headTextNodes = copiedNodes.filter(node => node.type === VISIBLE_NODE_TYPES.TEXT_NODE);
+          const numOfTextNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
+
+
+          const removeParentNodeIfNecessary = (parent) => {          
+            if(parent != this.state.elements.wrapper && parent.childNodes.length == 0){
+              //pop the parent fromt he stack
+              if(copiedNodes.pop().node !== parent){
+                console.error("Objects should be identical");
+              }
+              const nextParent = parent.parentNode;
+              nextParent.removeChild(parent);
+              removeParentNodeIfNecessary(nextParent);
+            }
+          }
+
+          for(let i = 0; i < numOfTextNodesToDelete;){
+            const { type, node, character } = copiedNodes.pop();
+
+            if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
+              this.options.onRemoveNode(node, character);
+            }
+            //Make a copy or else we loose the reference after removing
+            const parent = node.parentNode;
+
+            if(parent){
+              try{
+                parent.removeChild(node);
+                }catch(err){
+                  console.error(err);
+                }
+                //Do not count html nodes
+                if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
+                  i++;
+                  removeParentNodeIfNecessary(parent);
+                }
+            }
+          }
+          this.state.visibleNodes = copiedNodes;
+        }
+
+        break;
+      }
+
       case EVENT_NAMES.CLEAR: {
 
         //Clear all nodes without delay.
@@ -941,7 +1012,7 @@ class Typewriter {
           //Removal is counted against actual text nodes and not html tags, thus we need to count the actual number
           const headTextNodes = copiedNodes.filter(node => node.type === VISIBLE_NODE_TYPES.TEXT_NODE);
 
-          const numOfNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
+          const numOfTextNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
 
           const removeParentNodeIfNecessary = (parent) => {          
             if(parent != this.state.elements.wrapper && parent.childNodes.length == 0){
@@ -956,14 +1027,14 @@ class Typewriter {
           }
           
           //Iterate backwards as html nodes are added first
-          for (let i = 0; i < numOfNodesToDelete;) {
+          for (let i = 0; i < numOfTextNodesToDelete;) {
 
             if(copiedNodes.length > 0){
               const { type, node, character } = copiedNodes.pop();
 
-              // if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
-              //   this.options.onRemoveNode(node, character);
-              // }
+              if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
+                this.options.onRemoveNode(node, character);
+              }
 
               //Make a copy or else we loose the reference after removing
               const parent = node.parentNode;

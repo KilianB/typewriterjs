@@ -1,7 +1,8 @@
-# 5.12.2021 2.20.1
+# 6.12.2021 2.20.1
 
 - removed debug logging statements
 - fixed clear operation not deleting the last item in the shadow dom if it was an html element
+- add clearEnd to remove characters from the end of the document independently of the cursor location
 
 # 5.12.2021 2.20.0
 
