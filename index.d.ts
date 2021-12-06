@@ -176,7 +176,7 @@ declare module "typewriter-effect" {
      * @param amount Number of characters to delete. A value of 0 or negative removes everything
      * @param boolean whether to call the onRemoveNode callback be called for each node. False by default
      */
-       clearEnd(amount?: number, callOnRemove? : boolean): TypewriterClass
+    clearEnd(amount?: number, callOnRemove? : boolean): TypewriterClass
 
     /**
      * Call a callback function. The first parameter to the callback elements
