@@ -943,13 +943,10 @@ class Typewriter {
         const { visibleNodes } = this.state;
         const copiedNodes = [...visibleNodes];
 
-
         if (copiedNodes.length > 0) {
-
 
           const headTextNodes = copiedNodes.filter(node => node.type === VISIBLE_NODE_TYPES.TEXT_NODE);
           const numOfTextNodesToDelete = amount && amount > 0 && amount < headTextNodes.length ? amount : headTextNodes.length;
-
 
           const removeParentNodeIfNecessary = (parent) => {          
             if(parent != this.state.elements.wrapper && parent.childNodes.length == 0){
@@ -963,29 +960,44 @@ class Typewriter {
             }
           }
 
+          let cursorRemoved = false;
+
           for(let i = 0; i < numOfTextNodesToDelete;){
-            const { type, node, character } = copiedNodes.pop();
+            const nodeOrCursor = copiedNodes.pop();
+
+            //Ignore the cursor
+            if(nodeOrCursor == this.state.elements.cursor){
+              cursorRemoved = true;
+              continue;
+            }
+
+            const { type, node, character } = nodeOrCursor;
 
             if(callOnRemove && this.options.onRemoveNode && typeof this.options.onRemoveNode === 'function'){
               this.options.onRemoveNode(node, character);
             }
+
             //Make a copy or else we loose the reference after removing
             const parent = node.parentNode;
 
             if(parent){
               try{
                 parent.removeChild(node);
-                }catch(err){
+              }catch(err){
                   console.error(err);
-                }
+              }
                 //Do not count html nodes
-                if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
-                  i++;
-                  removeParentNodeIfNecessary(parent);
-                }
+              if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
+                i++;
+                removeParentNodeIfNecessary(parent);
+              }
             }
           }
+
           this.state.visibleNodes = copiedNodes;
+          if(cursorRemoved){
+            this.state.visibleNodes.push(this.state.elements.cursor);
+          }
         }
 
         break;
@@ -1042,14 +1054,14 @@ class Typewriter {
               if(parent){
                 try{
                   parent.removeChild(node);
-                  }catch(err){
+                }catch(err){
                     console.error(err);
-                  }
+                }
                   //Do not count html nodes
-                  if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
-                    i++;
-                    removeParentNodeIfNecessary(parent);
-                  }
+                if(type === VISIBLE_NODE_TYPES.TEXT_NODE){
+                  i++;
+                  removeParentNodeIfNecessary(parent);
+                }
               }
             }
           }
